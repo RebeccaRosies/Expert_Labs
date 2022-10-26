@@ -11,6 +11,8 @@ using UnityEngine.EventSystems;
 public class moveCharOnSlide_UiToslow : MonoBehaviour
 {
 
+   
+
     CharacterController characterController;
     [SerializeField] private UnityEngine.UI.Slider leftSlider;
     [SerializeField] private TextMeshProUGUI leftSlidertext;
@@ -22,6 +24,8 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     GraphicRaycaster ui_raycaster; // initialize a graphic raycaster -> 17: grab graphicraycaster from ui_canvas 
     PointerEventData click_data;
     List<RaycastResult> click_results;
+    /* PlayerInput playerInput; */
+    WheelchairControls wheelchairControls;
 
     float leftSliderStartValue;
     float currentLeftSliderValue;
@@ -29,10 +33,35 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     float slowDownStart;
     bool slowDownLeftActive = false;
     bool slowDownRightActive = false;
+    
+    private InputAction leftWheelPush;
+    private InputAction rightWheelPush;
+    
+    
+    private void Awake(){
+        //new input action system -> keyboard input 
+        wheelchairControls = new WheelchairControls();  
+       
+    }
+
+    private void OnEnable(){
+        //new input action system -> keyboard input 
+        leftWheelPush = wheelchairControls.LeftSliderInput.LeftWheelPush; 
+        leftWheelPush.Enable();
+        rightWheelPush = wheelchairControls.RightSliderInput.RightWheelPush; 
+        rightWheelPush.Enable();
+       
+   }
+
+    private void OnDisable(){
+        //new input action system -> keyboard input 
+        leftWheelPush.Disable();
+        rightWheelPush.Disable();
+    }
 
 
     void Start()
-    {
+    {      
         leftSlider.minValue = -1;
         leftSlider.maxValue = 1;
         rightSlider.minValue = -1;
@@ -41,12 +70,10 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         characterController = GetComponent<CharacterController>();
 
         leftSlider.onValueChanged.AddListener((v)=>{
-           /*  Debug.Log(v); */
             leftSlidertext.text = v.ToString("0.00"); //value of the string =  #of rotations/min
             moveCharLeftOnSlide(v);
         });
         rightSlider.onValueChanged.AddListener((v)=>{
-           /*  Debug.Log(v); */
             rightSlidertext.text = v.ToString("0.00"); //value of the string =  #of rotations/min
             moveCharRightOnSlide(v);
         });
@@ -54,23 +81,65 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         //----------GRAPHICRAYCASTER---------------------------------------------------//
          ui_raycaster = ui_canvas.GetComponent<GraphicRaycaster>(); //Add Raycaster so you don't have to get it from canvas every single frame
         // Raycast cause onpointerclick / onpointerenter = unreliable
-        //+pointer detection can fail when framejumps/ lagspikes occur
+        // + pointer detection can fail when framejumps/ lagspikes occur
         // use graphics raycaster for UI elements (element of 'canvas')
-        //for raycast we need:  1) pointerEventData object to set current mouse position into
-
+        // for raycast we need:  1) pointerEventData object to set current mouse position into
         //                      2) List to store the data into
-        //    -> put them in start so they are accesible for the whole script
-        //      now we can clear out the results each time end populate them with a new set of results
+        //    -> put them in start -> accesible for whole script
+        //      clear results each time & populate them with new set of results
         click_data = new PointerEventData(EventSystem.current);
         click_results = new List<RaycastResult>(); 
     }
 
-  
     void Update()
     {
          if(Mouse.current.leftButton.isPressed){
             GetUIElementsClicked();
+        } 
+     
+        //--------------------------------------------------------------------------------------------------
+        //new input action system -> keyboard input -> pass through - any || 1D axis: positive & negative  
+        Debug.Log(leftWheelPush);
+        // actionValue = inputActionClass.ActionMap.Action.ReadValue<type>();
+        float leftwheel = wheelchairControls.LeftSliderInput.LeftWheelPush.ReadValue<float>();
+        Debug.Log(leftwheel);
+       
+        if (leftwheel > 0){
+            slowDownLeftActive = false;
+            Debug.Log("its registrating that W is being held");
+            leftSlider.value += (Time.deltaTime);
+            currentLeftSliderValue = leftSlider.value;
         }
+         if (leftwheel == 0){
+            slowDownLeftActive = true;
+        }
+        if (leftwheel < 0){
+            slowDownLeftActive = false;
+            Debug.Log("its registrating that S is being held");
+            leftSlider.value -= (Time.deltaTime);
+            currentLeftSliderValue = leftSlider.value;
+        }
+
+        float rightwheel = wheelchairControls.RightSliderInput.RightWheelPush.ReadValue<float>();
+        Debug.Log(rightwheel);
+       
+        if (rightwheel > 0){
+            slowDownRightActive = false;
+            Debug.Log("its registrating that X is being held");
+            rightSlider.value += (Time.deltaTime);
+            currentRightSliderValue = rightSlider.value;
+        }
+         if (rightwheel == 0){
+            slowDownRightActive = true;
+        }
+        if (rightwheel < 0){
+            slowDownRightActive = false;
+            Debug.Log("its registrating that D is being held");
+            rightSlider.value -= (Time.deltaTime);
+            currentRightSliderValue = rightSlider.value;
+        }
+        //----------------------------------------------------------------------------------------------------------------
+   
 
     // if the left slider was released then make it start to slow down , if the right slider was released then make it start to slow down
         if(Mouse.current.leftButton.wasReleasedThisFrame && click_results[0].gameObject.transform.parent.parent.name == "SliderLeft"){
@@ -125,7 +194,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
 
 
     void GetUIElementsClicked(){
-        //** get all UI elements clicked, in order of depth (first detected is first) **//
+        //** get all UI elements clicked, in order of depth (1st detected is 1st) **//
         //grab mouse position & update click-data
         click_data.position = Mouse.current.position.ReadValue();
         click_results.Clear(); //clear out previous results
@@ -133,14 +202,13 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
 
         foreach(RaycastResult result in click_results){
             GameObject ui_element = result.gameObject;
-            Debug.Log(ui_element);
-            if (ui_element.name == "Handle"){
-                Debug.Log("Handle is being pressed");
+          /*   if (ui_element.name == "Handle"){
                 Debug.Log(ui_element.transform.position);
-            }
+            } */
         }
-        
     }
+
+  
 
     void resetLeftPositiveSlider(){
          if (leftSlider.value != 0){

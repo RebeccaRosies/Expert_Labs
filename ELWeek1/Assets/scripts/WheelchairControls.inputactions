@@ -1,0 +1,106 @@
+{
+    "name": "WheelchairControls",
+    "maps": [
+        {
+            "name": "LeftSliderInput",
+            "id": "a113c556-9973-446e-b5af-258f8027fd9e",
+            "actions": [
+                {
+                    "name": "LeftWheelPush",
+                    "type": "PassThrough",
+                    "id": "8f1034f9-92c9-4425-b3af-e59b9001fab7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "1D Axis",
+                    "id": "a29b492a-4333-473a-8c09-a8c60c1f65a1",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LeftWheelPush",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "5912ecbf-d977-4786-b322-b13d0ad40058",
+                    "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LeftWheelPush",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "e21a3a85-32c1-4d3c-9f79-0340635bab60",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LeftWheelPush",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                }
+            ]
+        },
+        {
+            "name": "RightSliderInput",
+            "id": "54b43a6e-e0cb-435d-b508-67bced3a9dc9",
+            "actions": [
+                {
+                    "name": "RightWheelPush",
+                    "type": "PassThrough",
+                    "id": "1d3df67d-0307-4375-8ab7-8d74ccca51b3",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "1D Axis",
+                    "id": "e8b7405a-fd93-4193-9d39-f8eaa2c3f811",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RightWheelPush",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "b40dd964-5be9-4e94-8e0a-f5ca3318199a",
+                    "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RightWheelPush",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "05766a1e-209f-4fc9-a107-0bc7fb6c5428",
+                    "path": "<Keyboard>/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RightWheelPush",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
