@@ -10,9 +10,6 @@ using UnityEngine.EventSystems;
 
 public class moveCharOnSlide_UiToslow : MonoBehaviour
 {
-
-   
-
     CharacterController characterController;
     [SerializeField] private UnityEngine.UI.Slider leftSlider;
     [SerializeField] private TextMeshProUGUI leftSlidertext;
@@ -24,7 +21,6 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     GraphicRaycaster ui_raycaster; // initialize a graphic raycaster -> 17: grab graphicraycaster from ui_canvas 
     PointerEventData click_data;
     List<RaycastResult> click_results;
-    /* PlayerInput playerInput; */
     WheelchairControls wheelchairControls;
 
     float leftSliderStartValue;
@@ -33,7 +29,13 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     float slowDownStart;
     bool slowDownLeftActive = false;
     bool slowDownRightActive = false;
-    
+    float leftwheel = 0;
+    float rightwheel = 0;
+    float listenValueleft = 0;
+    float listenValueright= 0;
+
+    float leftDir;
+    float rightDir;
     private InputAction leftWheelPush;
     private InputAction rightWheelPush;
     
@@ -41,7 +43,6 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     private void Awake(){
         //new input action system -> keyboard input 
         wheelchairControls = new WheelchairControls();  
-       
     }
 
     private void OnEnable(){
@@ -68,15 +69,8 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         rightSlider.maxValue = 1;
 
         characterController = GetComponent<CharacterController>();
-
-        leftSlider.onValueChanged.AddListener((v)=>{
-            leftSlidertext.text = v.ToString("0.00"); //value of the string =  #of rotations/min
-            moveCharLeftOnSlide(v);
-        });
-        rightSlider.onValueChanged.AddListener((v)=>{
-            rightSlidertext.text = v.ToString("0.00"); //value of the string =  #of rotations/min
-            moveCharRightOnSlide(v);
-        });
+        listenToChanges();
+        
         //
         //----------GRAPHICRAYCASTER---------------------------------------------------//
          ui_raycaster = ui_canvas.GetComponent<GraphicRaycaster>(); //Add Raycaster so you don't have to get it from canvas every single frame
@@ -90,20 +84,61 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         click_data = new PointerEventData(EventSystem.current);
         click_results = new List<RaycastResult>(); 
     }
+    void listenToChanges(){
+        float rotatebydegrees = 0;
+        leftSlider.onValueChanged.AddListener((vleft)=>{
+            leftSlidertext.text = vleft.ToString("0.00"); //value of the string =  #of rotations/min
+            /* moveCharLeftOnSlide(v); */
+            listenValueleft = vleft;
+            if (vleft>1){
+                leftDir =1;
+            } else if (vleft<1){
+                leftDir = -1;
+            } else if (vleft==0){
+                leftDir = 0;
+            } 
+            moveCharOnSlide(listenValueleft, listenValueright, leftDir, rightDir);
+         
+         //listen to the slowing down of rotation and keep it rotating while sliders go to zero
+          if (listenValueright>listenValueleft){
+                rotatebydegrees = listenValueright - listenValueleft; //same time, different direction, most power -> 1 - - 1 =  2, least power = 0 - 0 = 0 => 0 - 2
+                Debug.Log(rotatebydegrees);
+                Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
+                transform.Rotate(rotationToAdd);
+            }  else if (listenValueright<listenValueleft){
+                rotatebydegrees = listenValueleft - listenValueright;
+                Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
+                transform.Rotate(rotationToAdd);
+            }
 
+        });
+        rightSlider.onValueChanged.AddListener((vright)=>{
+            rightSlidertext.text = vright.ToString("0.00"); //value of the string =  #of rotations/min
+            /* moveCharRightOnSlide(v); */
+            listenValueright = vright;
+            if (vright>1){
+                rightDir =1;
+            } else if (vright==0){
+                rightDir = 0;
+            } 
+            moveCharOnSlide(listenValueleft, listenValueright, leftDir, rightDir);
+        });
+        Debug.Log(rightSlider);
+        Debug.Log(listenValueleft);
+       /*  moveCharOnSlide(listenValueleft, listenValueright, leftDir, rightDir); */
+    }
     void Update()
     {
+        
          if(Mouse.current.leftButton.isPressed){
             GetUIElementsClicked();
         } 
      
         //--------------------------------------------------------------------------------------------------
         //new input action system -> keyboard input -> pass through - any || 1D axis: positive & negative  
-        Debug.Log(leftWheelPush);
         // actionValue = inputActionClass.ActionMap.Action.ReadValue<type>();
-        float leftwheel = wheelchairControls.LeftSliderInput.LeftWheelPush.ReadValue<float>();
-        Debug.Log(leftwheel);
-       
+        leftwheel = wheelchairControls.LeftSliderInput.LeftWheelPush.ReadValue<float>();
+
         if (leftwheel > 0){
             slowDownLeftActive = false;
             Debug.Log("its registrating that W is being held");
@@ -120,7 +155,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
             currentLeftSliderValue = leftSlider.value;
         }
 
-        float rightwheel = wheelchairControls.RightSliderInput.RightWheelPush.ReadValue<float>();
+        rightwheel = wheelchairControls.RightSliderInput.RightWheelPush.ReadValue<float>();
         Debug.Log(rightwheel);
        
         if (rightwheel > 0){
@@ -156,40 +191,71 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
              slowDownRightActive = false;
         }
 
-    // if the slider is currently not zero then keep movig it at the # of rotations/minute it is set at
-         if( currentLeftSliderValue != 0.00f){
-             moveCharLeftOnSlide(currentLeftSliderValue);
+    // if the slider is currently not zero then keep moving it at the # of rotations/minute it is set at
+        //SINGLE
+         //if( currentLeftSliderValue != 0.00f){
+            /*  moveCharLeftOnSlide(currentLeftSliderValue); */
+            /* moveCharOnSlide(currentLeftSliderValue, currentRightSliderValue, leftwheel, rightwheel); */
+       //  }
+       //  if( currentRightSliderValue != 0.00f){
+             /* moveCharRightOnSlide(currentRightSliderValue); */
+             /* moveCharOnSlide(currentLeftSliderValue, currentRightSliderValue, leftwheel, rightwheel); */
+       //  }
+        //DOUBLE
+        if( currentLeftSliderValue != 0.00f || currentRightSliderValue != 0.00f){
+             moveCharOnSlide(currentLeftSliderValue, currentRightSliderValue, leftwheel, rightwheel);
         }
-        if( currentRightSliderValue != 0.00f){
-             moveCharRightOnSlide(currentRightSliderValue);
-        }
-    // if the LEFT slider is currently above / below zero and should be slowed down -> decrease speed to 0
+        // if the LEFT slider is currently above / below zero and should be slowed down -> decrease speed to 0
         if (slowDownLeftActive && currentLeftSliderValue >= 0){
             resetLeftPositiveSlider();
         }
         if (slowDownLeftActive && currentLeftSliderValue <= 0){
             resetLeftNegativeSlider();
         }
-    // if the RIGHT slider is currently above zero and should be slowed down -> decrease speed to 0
+        // if the RIGHT slider is currently above zero and should be slowed down -> decrease speed to 0
         if (slowDownRightActive && currentRightSliderValue >= 0){
             resetRightPositiveSlider();
         }
         if (slowDownRightActive && currentRightSliderValue <= 0){
             resetRightNegativeSlider();
         }
-        
     }
-      void moveCharLeftOnSlide(float v){
-        Vector3 movingVector = new Vector3(0,0,v);
-       /*  Debug.Log(movingVector); */
+    
+    //SINGLE
+      /* void moveCharLeftOnSlide(float v){
         characterController.Move(new Vector3(0,0,v*2) * Time.deltaTime);
         currentLeftSliderValue = v;
     }
        void moveCharRightOnSlide(float v){
-        Vector3 movingVector = new Vector3(0,0,v);
-       /*  Debug.Log(movingVector); */
         characterController.Move(new Vector3(0,0,v*2) * Time.deltaTime);
         currentRightSliderValue = v;
+    } */
+    //DOUBLE
+    void moveCharOnSlide(float vleft, float vright, float leftDir, float rightDir){
+        float rotatebydegrees = 0;  
+        if ((leftDir == 1 && rightDir == 1)||(leftDir == -1 && rightDir == -1)){
+            // when both wheels turn in the same direction -> move forwards or backwards depending on direction
+            float moveForward = vright + vleft;
+            characterController.Move(new Vector3(0,0,moveForward) * Time.deltaTime);
+           
+        } else if ((leftDir == 1 && rightDir == -1)||(leftDir == -1 && rightDir == 1)){
+            // when both wheels turn in a different direction -> move forwards or backwards depending on direction
+            if (vright>vleft){
+                rotatebydegrees = vright - vleft; //same time, different direction, most power -> 1 - - 1 =  2, least power = 0 - 0 = 0 => 0 - 2
+                Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
+                transform.Rotate(rotationToAdd);
+    
+            } else if (vright<vleft){
+                rotatebydegrees = vleft - vright;
+                Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
+                transform.Rotate(rotationToAdd);        
+                /* Quaternion target = Quaternion.Euler(0, rotatebydegrees * 180, 0);   
+                characterController.transform.rotation = Quaternion.Lerp(currentRotation, target, Time.deltaTime); */
+            }
+        }
+       
+        currentRightSliderValue = vright;
+        currentLeftSliderValue = vleft;
     }
 
 
@@ -207,9 +273,6 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
             } */
         }
     }
-
-  
-
     void resetLeftPositiveSlider(){
          if (leftSlider.value != 0){
         leftSlider.value -= Time.deltaTime;
@@ -230,4 +293,5 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         rightSlider.value += Time.deltaTime;
          } 
     }
+
 }
