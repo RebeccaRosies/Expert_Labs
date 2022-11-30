@@ -23,32 +23,16 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     List<RaycastResult> click_results;
     WheelchairControls wheelchairControls;
 
-    //public float drag;
-    //public float rotationDrag;
-
     public float speed;
     public float radius;
 
-    float leftSliderStartValue;
-    float currentLeftSliderValue;
-    float currentRightSliderValue;
-    float slowDownStart;
-    bool slowDownLeftActive = false;
-    bool slowDownRightActive = false;
-    float leftwheel = 0;
-    float rightwheel = 0;
-    float listenValueleft = 0;
-    float listenValueright= 0;
-
     double leftDir;
     double rightDir;
-    private InputAction leftWheelPush;
-    private InputAction rightWheelPush;
 
     //ARDITY VARIABLES
      string ticksString;
     float ticks;
-    float previousTicks = 0;
+    //float previousTicks = 0;
     string msg;
 
     double valueLeft;
@@ -56,33 +40,43 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
 
     double drag = 0.005;
     public double inputMulti = 1;
+
+    //ARDUINO 2 MESSAGES
+
+    wheel previousMsg;
+    wheel currentMsg;
+
+    float timer = 0;
+
+    public GameObject RightWheel;
+    public GameObject LeftWheel;
+
+    double moveForward;
+    double rotatebydegrees;
+    float rotateAroundByDegrees;
     
     private void Awake(){
         //new input action system -> keyboard input 
         wheelchairControls = new WheelchairControls();  
+        GameObject RightWheel = GameObject.Find("RightWheel");
+        GameObject LeftWheel = GameObject.Find("LeftWheel");
     }
-
-    private void OnEnable(){
-        //new input action system -> keyboard input 
-       /*  leftWheelPush = wheelchairControls.LeftSliderInput.LeftWheelPush; 
-        leftWheelPush.Enable();
-        rightWheelPush = wheelchairControls.RightSliderInput.RightWheelPush; 
-        rightWheelPush.Enable(); */
-       
-   }
-
-    private void OnDisable(){
-        //new input action system -> keyboard input 
-       /*  leftWheelPush.Disable();
-        rightWheelPush.Disable(); */
+    public class wheel
+    {
+        public double value;
+        public bool isLeftWheel;
+        public wheel(double value, bool isLeftWheel)
+        {
+            this.value = value;
+            this.isLeftWheel = isLeftWheel;
+        }
     }
-
 
     void Start()
     {      
         if(speed <=0){
             speed = 1;
-            //drag can't be 0 because you can't divide by 0 
+            // can't be 0 because you can't divide by 0 
         } 
 
         if (radius<=0){
@@ -97,16 +91,8 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         characterController = GetComponent<CharacterController>();
         //listenToChanges();
         
-        //
         //----------GRAPHICRAYCASTER---------------------------------------------------//
          ui_raycaster = ui_canvas.GetComponent<GraphicRaycaster>(); //Add Raycaster so you don't have to get it from canvas every single frame
-        // Raycast cause onpointerclick / onpointerenter = unreliable
-        // + pointer detection can fail when framejumps/ lagspikes occur
-        // use graphics raycaster for UI elements (element of 'canvas')
-        // for raycast we need:  1) pointerEventData object to set current mouse position into
-        //                      2) List to store the data into
-        //    -> put them in start -> accesible for whole script
-        //      clear results each time & populate them with new set of results
         click_data = new PointerEventData(EventSystem.current);
         click_results = new List<RaycastResult>(); 
     }
@@ -114,6 +100,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     {
         messageDecoder(msg);
         //Debug.Log("Message arrived in movementScript: " + msg);
+
     }
 
      void OnConnectionEvent(bool success)
@@ -125,6 +112,12 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     }
 
      void messageDecoder(string msg){
+        if (timer <= 100){
+        previousMsg = currentMsg; // currentmsg schuift op en word de previousmsg
+        } else {
+        previousMsg = null;
+        }
+
         if(msg != null ){
             if(msg[0] == 'O'){
                 if(msg[4] == 'L'){
@@ -141,6 +134,8 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
                     rightDir = 1;
                     // Debug.Log(valueRight);
                 } 
+
+                currentMsg = new wheel(valueRight, false);
             }
             if(msg[0] == 'T'){
                 if(msg[4] == 'L'){
@@ -157,66 +152,58 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
                     leftDir = 1;
                     //Debug.Log(valueLeft);
                 } 
+                currentMsg = new wheel(valueLeft, true);
             }
-            //moveCharacter();
-            previousTicks = ticks;
-            Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight + "leftDir =" + leftDir + "RightDir =" + rightDir);
-            // moveCharOnSlide(leftDir, rightDir);
+           // previousTicks = ticks;
+            //Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight + "leftDir =" + leftDir + "RightDir =" + rightDir);
+        
+        
         }
     }
-    /* void listenToChanges(){
-        float rotatebydegrees = 0;
-        leftSlider.onValueChanged.AddListener((valueLeft)=>{
-            leftSlidertext.text = valueLeft.ToString("0.00"); //value of the string =  #of rotations/min
-            listenValueleft = valueLeft;
-            if (valueLeft>0.01){
-                leftDir = 1;
-            } else if (valueLeft<-0.01){
-                leftDir = -1;
-            } else if (valueLeft<0.01||valueLeft>-0.01){
-                leftDir = 0;
-                listenValueleft = 0;
-            } 
-            moveCharOnSlide(listenValueleft, listenValueright, leftDir, rightDir);
-         
-            //listen to the slowing down of right rotation and keep it rotating while sliders go to zero
-            if (listenValueright>listenValueleft){
-                    rotatebydegrees = listenValueright - listenValueleft; //same time, different direction, most power -> 1 - - 1 =  2, least power = 0 - 0 = 0 => 0 - 2
-                    Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
-                    transform.Rotate(rotationToAdd);
-                } else if (listenValueright<listenValueleft){
-                    rotatebydegrees = listenValueleft - listenValueright;
-                    Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
-                    transform.Rotate(rotationToAdd);
-                }
-
-        });
-        rightSlider.onValueChanged.AddListener((valueRight)=>{
-            rightSlidertext.text = valueRight.ToString("0.00"); //value of the string =  #of rotations/min
-            listenValueright = valueRight;
-            if (valueRight>0.01){
-                rightDir =1;
-            } else if (valueRight<-0.01){
-                rightDir = -1;
-            } else if (valueRight<0.01||valueRight>-0.01){
-                rightDir = 0;
-                listenValueright = 0;
-            }
-            moveCharOnSlide(listenValueleft, listenValueright, leftDir, rightDir);
-        });
-    } */
+   
     void Update()
     {
-        
-        double rotatebydegrees = 0;  
-        double moveForward = 0;
-        moveForward = (valueRight + valueLeft) * speed ;
-        rotatebydegrees = ((valueRight - valueLeft) * speed)  *radius; 
-        
-        Vector3 rotationToAdd = new Vector3(0, (float)(rotatebydegrees), 0);
+        //double rotatebydegrees = 0;  
+        //double moveForward = 0;
 
-        characterController.transform.Translate(new Vector3(0,0, (float)(moveForward)), Space.Self);
-        transform.Rotate(rotationToAdd);
+        timer += Time.deltaTime;
+        if (timer >= 100){
+            timer = 0;
+        }
+        if(previousMsg == null && currentMsg != null){
+            rotateAround(currentMsg.isLeftWheel, currentMsg.value);     // there havent been 2 messages  -> always rotationaround (0,1), (0,-1), (1,0) or (-1,0)
+        }
+        if(previousMsg != null){                                        // there've been 2 messages 
+            if(previousMsg.isLeftWheel != currentMsg.isLeftWheel){          //there's a message from the left and right
+                if(previousMsg.value == currentMsg.value){                      //they match -> move forward in direction of value
+                    move(previousMsg.value, currentMsg.value);
+                    slowDown();
+                };
+                if(previousMsg.value != currentMsg.value){                      //they don't match -> rotation around self in direction of positive wheel 
+                    rotate(previousMsg.isLeftWheel, previousMsg.value, currentMsg.isLeftWheel, currentMsg.value);
+                    slowDown();
+                }
+            }
+            if(previousMsg.isLeftWheel == currentMsg.isLeftWheel){          //there's 2 left messages or 2 right
+                if(previousMsg.value == currentMsg.value){                      //they match -> rotate twice around left or right in direction of value
+                    rotateAround(currentMsg.isLeftWheel, currentMsg.value*2);
+                    slowDown();
+                };
+                if(previousMsg.value != currentMsg.value){                      //they don't match -> first rotate around direction of previous value then current value
+                    rotateAround(currentMsg.isLeftWheel, previousMsg.value);
+                    rotateAround(currentMsg.isLeftWheel, currentMsg.value);
+                    slowDown();
+                }
+            }
+        }
+
+        //moveForward = (valueRight + valueLeft) * speed ;
+        //rotatebydegrees = ((valueRight - valueLeft) * speed)  *radius; 
+        //Vector3 rotationToAdd = new Vector3(0, (float)(rotatebydegrees), 0);
+
+        //characterController.transform.Translate(new Vector3(0,0, (float)(moveForward)), Space.Self);
+        //transform.Rotate(rotationToAdd);
+        
 
         if(valueRight > 0.05) {
             valueRight -= drag;
@@ -232,209 +219,84 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         } else {
             valueLeft *= 0;
         }
-            
-        Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight);
+    
 
+        slowDown();
+        //Debug.Log("rotateAroundByDegrees =" + rotateAroundByDegrees + "rotatebydegrees =" + rotatebydegrees + "moveForward =" + moveForward);
+        //Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight);   
+    }
 
-        /*  if(Mouse.current.leftButton.isPressed){
-            GetUIElementsClicked();
-        }  */
+    void slowDown(){
+        if (moveForward > 0){
+            moveForward -= Time.deltaTime;
+            if( moveForward<0.01 || moveForward>-0.01){
+                moveForward = 0;
+            }
+         }
+         if (moveForward < 0){
+            moveForward += Time.deltaTime;
+            if( moveForward<0.01 || moveForward>-0.01){
+                moveForward = 0;
+            }
+         } 
+         if (rotatebydegrees > 0){
+        rotatebydegrees -= Time.deltaTime;
+            if( rotatebydegrees<0.01 || rotatebydegrees>-0.01){
+                rotatebydegrees = 0;
+            }
+         }
+    
+         if (rotatebydegrees < 0){
+        rotatebydegrees += Time.deltaTime;
+            if( rotatebydegrees<0.01 || rotatebydegrees>-0.01){
+                rotatebydegrees =0;
+            }
+         } 
+
+          if (rotateAroundByDegrees > 0){
+        rotateAroundByDegrees -= Time.deltaTime;
+            if( rotateAroundByDegrees<0.01 || rotateAroundByDegrees>-0.01){
+                rotateAroundByDegrees = 0;
+            }
+         }
+    
+         if (rotateAroundByDegrees < 0){
+        rotateAroundByDegrees += Time.deltaTime;
+            if( rotateAroundByDegrees<0.01 || rotateAroundByDegrees>-0.01){
+                rotateAroundByDegrees =0;
+            }
+         } 
+    }
+    void rotateAround(bool left, double value){
+        //rotate character around 
+        // 1st variable = target around which its gonna spin (depends on direction (left = true dan rightwheel))
+            //= public gameobject(Rightwheel) -> gameobject.transform.position 
+            //= public gameobject(leftwheel) -> gameobject.transformposition
+        //2nd variable = Vector3.(0,0,1).space(self)? 
+        //3rd variable = degrees per second -> value * Time.deltaTime
      
-        //--------------------------------------------------------------------------------------------------
-        //new input action system -> keyboard input -> pass through - any || 1D axis: positive & negative  
-        // actionValue = inputActionClass.ActionMap.Action.ReadValue<type>();
-        /* leftwheel = wheelchairControls.LeftSliderInput.LeftWheelPush.ReadValue<float>();
-
-        if (leftwheel > 0){
-            slowDownLeftActive = false;
-            Debug.Log("its registrating that W is being held");
-            leftSlider.value += (Time.deltaTime);
-            currentLeftSliderValue = leftSlider.value;
+        rotateAroundByDegrees = (float)(value*100) * Time.deltaTime;
+        if (left){
+            transform.RotateAround(RightWheel.transform.position, Vector3.down, rotateAroundByDegrees);
+        } else if (!left){
+            transform.RotateAround(LeftWheel.transform.position, Vector3.down, rotateAroundByDegrees);
         }
-         if (leftwheel == 0){
-            slowDownLeftActive = true;
-        }
-        if (leftwheel < 0){
-            slowDownLeftActive = false;
-            Debug.Log("its registrating that S is being held");
-            leftSlider.value -= (Time.deltaTime);
-            currentLeftSliderValue = leftSlider.value;
-        }
-
-        rightwheel = wheelchairControls.RightSliderInput.RightWheelPush.ReadValue<float>();
-       
-        if (rightwheel > 0){
-            slowDownRightActive = false;
-            Debug.Log("its registrating that X is being held");
-            rightSlider.value += (Time.deltaTime);
-            currentRightSliderValue = rightSlider.value;
-        }
-         if (rightwheel == 0){
-            slowDownRightActive = true;
-        }
-        if (rightwheel < 0){
-            slowDownRightActive = false;
-            Debug.Log("its registrating that D is being held");
-            rightSlider.value -= (Time.deltaTime);
-            currentRightSliderValue = rightSlider.value;
-        }
-
-    // if the left slider was released then make it start to slow down , if the right slider was released then make it start to slow down
-        if(Mouse.current.leftButton.wasReleasedThisFrame && click_results[0].gameObject.transform.parent.parent.name == "SliderLeft"){
-            slowDownLeftActive = true;
-        }
-        if(Mouse.current.leftButton.wasReleasedThisFrame && click_results[0].gameObject.transform.parent.parent.name == "SliderRight"){
-            slowDownRightActive = true;
-        }
-    // if the left or right slider gets back to zero then stop decreasing speed in the respective slider
-        if(currentLeftSliderValue == 0.00f){
-             slowDownLeftActive = false;
-        }
-        if(currentRightSliderValue == 0.00f){
-             slowDownRightActive = false;
-        }
-    // if the sliders are currently not zero then keep moving it at the # of rotations/minute it is set at
-        if( currentLeftSliderValue != 0.00f || currentRightSliderValue != 0.00f){
-             moveCharOnSlide(currentLeftSliderValue, currentRightSliderValue, leftwheel, rightwheel);
-             Debug.Log("THE move function is being invoked");
-             Debug.Log(currentLeftSliderValue + " = leftslider en rightslider = " + currentRightSliderValue);
-        }
-        //----------------------------------------------------------------------------------------------------------------
-   
-        // if the LEFT slider is currently above / below zero and should be slowed down -> decrease speed to 0
-        if (slowDownLeftActive && currentLeftSliderValue >= 0){
-            resetLeftPositiveSlider();
-        }
-        if (slowDownLeftActive && currentLeftSliderValue <= 0){
-            resetLeftNegativeSlider();
-        }
-        // if the RIGHT slider is currently above zero and should be slowed down -> decrease speed to 0
-        if (slowDownRightActive && currentRightSliderValue >= 0){
-            resetRightPositiveSlider();
-        }
-        if (slowDownRightActive && currentRightSliderValue <= 0){
-            resetRightNegativeSlider();
-        } */
-    }
-    
-    void moveCharOnSlide(float leftDir, float rightDir){
-        // float rotatebydegrees = 0;  
-        // float moveForward = 0;
-        // moveForward = (valueRight + valueLeft) * speed ;
-        // rotatebydegrees = (valueRight - valueLeft)*speed *radius; 
         
-        // Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
-
-        // characterController.transform.Translate(new Vector3(0,0,moveForward), Space.Self);
-        // transform.Rotate(rotationToAdd);
-
-
-        /* if ((leftDir == 1 && rightDir == 1)||(leftDir == -1 && rightDir == -1)){
-            // when both wheels turn in the same direction -> move forwards or backwards depending on direction
-            if (valueRight == valueLeft){
-                moveForward = valueRight + valueLeft;
-                characterController.transform.Translate(new Vector3(0,0,moveForward), Space.Self);
-            } else
-            if(valueRight>valueLeft){
-                moveForward = valueRight + valueLeft;
-                characterController.transform.Translate(new Vector3(0,0,moveForward), Space.Self);
-                Vector3 rotation = new Vector3(0, valueRight - valueLeft, 0);
-                transform.Rotate(rotation);    
-            } else
-            if(valueRight<valueLeft){
-                moveForward = valueRight + valueLeft;
-                Vector3 rotation = new Vector3(0, valueLeft - valueRight, 0);
-                transform.Rotate(rotation);     
-            }   
-        } else if ((leftDir == 1 && rightDir == -1)||(leftDir == -1 && rightDir == 1)){
-            // when both wheels turn in a different direction -> move forwards or backwards depending on direction
-            // if leftDir = +1 -> leftvalue = positive (cus otherwise message = CCL/CLW -> other leftDir )
-            // if leftDir = -1 -> leftvalue = negative (cus otherwise message = CCL/CLW -> other leftDir )
-            // if rightDir = +1 -> rightvalue = positive (cus otherwise message = CCL/CLW -> other leftDir )
-            // if rightDir = -1 -> rightvalue = negative (cus otherwise message = CCL/CLW -> other leftDir )
-            if (valueRight>valueLeft){ //valueright = always positive , valueLeft = always negative
-                moveForward = (valueRight + valueLeft);
-                characterController.transform.Translate(new Vector3(0,0,moveForward), Space.Self);
-                rotatebydegrees = (valueRight + valueLeft); //same time, different direction, most power -> 1 - - 1 =  2, least power = 0 - 0 = 0 => 0 - 2
-                Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
-                transform.Rotate(rotationToAdd);
-                // Debug.Log(valueRight + "+" + valueLeft + "=" + moveForward); 
-    
-            } else if (valueRight<valueLeft){ //valueright = always negative , valueLeft = always positive
-                moveForward = (valueLeft + valueRight);
-                characterController.transform.Translate(new Vector3(0,0,moveForward), Space.Self);
-                rotatebydegrees = (valueLeft - valueRight);
-                Vector3 rotationToAdd = new Vector3(0, -rotatebydegrees, 0);
-                transform.Rotate(rotationToAdd);    
-                // Debug.Log(valueRight + "+" + valueLeft + "=" + moveForward);   
-            }
-        } else if ((leftDir == 0 || rightDir == 0)&&(leftDir != 0 || rightDir != 0)) {
-            if(leftDir==0){
-                moveForward = valueRight/2;
-                characterController.transform.Translate(new Vector3(0,0,moveForward), Space.Self);
-                rotatebydegrees = (valueRight - valueLeft);
-                Vector3 rotationToAdd = new Vector3(0, rotatebydegrees, 0);
-                transform.Rotate(rotationToAdd);        
-            }
-            if(rightDir==0){
-                moveForward = valueLeft/2;
-                characterController.transform.Translate(new Vector3(0,0,moveForward), Space.Self);
-                rotatebydegrees = (valueLeft-valueRight);
-                Vector3 rotationToAdd = new Vector3(0, -rotatebydegrees, 0);
-                transform.Rotate(rotationToAdd);        
-            }}
-             */
-     //    currentRightSliderValue = valueRight;
-      //  currentLeftSliderValue = valueLeft;
+    }
+    void rotate(bool left, double valuePrevious, bool right, double valueCurrent){
+        //double rotatebydegrees = 0;
+        rotatebydegrees = ((valueRight - valueLeft) * speed)  *radius;
+        Vector3 rotationToAdd = new Vector3(0, (float)(rotatebydegrees), 0);
+        transform.Rotate(rotationToAdd);
         
-
     }
 
-
-    /* void GetUIElementsClicked(){
-        // get all UI elements clicked, in order of depth (1st detected is 1st) //
-        click_data.position = Mouse.current.position.ReadValue();//grab mouse position & update click-data
-        click_results.Clear(); //clear out previous results
-        ui_raycaster.Raycast(click_data, click_results); //perform Raycast itself -> will return UI elements it comes into contact with
-
-        foreach(RaycastResult result in click_results){
-            GameObject ui_element = result.gameObject;
-          //   if (ui_element.name == "Handle"){
-           //     Debug.Log(ui_element.transform.position);
-           // }
-        }
+    void move(double previousValue , double currentValue){
+        //double moveForward = 0;
+        moveForward = (previousValue + currentValue) * speed ;
+        Debug.Log("previousValue =" + previousValue + "currentValue =" + currentValue + "moveForward = " + moveForward);
+        characterController.transform.Translate(new Vector3(0,0, (float)(moveForward)), Space.Self);
+        
     }
-    void resetLeftPositiveSlider(){
-         if (leftSlider.value != 0){
-        leftSlider.value -= Time.deltaTime;
-         if( leftSlider.value<0.01 || leftSlider.value>-0.01){
-            leftSlider.value =0;
-         }
-         }
-    }
-    void resetLeftNegativeSlider(){
-         if (leftSlider.value != 0){
-        leftSlider.value += Time.deltaTime;
-         if( leftSlider.value<0.01 || leftSlider.value>-0.01){
-            leftSlider.value =0;
-         }
-         } 
-    }
-     void resetRightPositiveSlider(){
-        if (rightSlider.value != 0){
-        rightSlider.value -= Time.deltaTime;
-        if( rightSlider.value<0.01 || rightSlider.value>-0.01){
-            rightSlider.value =0;
-         }
-         }
-    }
-    void resetRightNegativeSlider(){
-         if (rightSlider.value != 0){
-        rightSlider.value += Time.deltaTime;
-        if( rightSlider.value<0.01 || rightSlider.value>-0.01){
-            rightSlider.value =0;
-         }
-         } 
-    } */
 
 }
