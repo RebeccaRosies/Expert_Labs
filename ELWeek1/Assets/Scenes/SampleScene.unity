@@ -2898,7 +2898,7 @@ MonoBehaviour:
   rightSlider: {fileID: 392913272}
   rightSlidertext: {fileID: 28430526}
   ui_canvas: {fileID: 1795319043}
-  speed: 1.05
+  speed: 10.44
   radius: 57.1
   inputMulti: 0.01
   RightWheel: {fileID: 1995205270}

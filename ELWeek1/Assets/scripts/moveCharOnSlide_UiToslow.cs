@@ -42,7 +42,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     public double inputMulti = 1;
 
     //ARDUINO 2 MESSAGES
-
+    bool reset;
     wheel previousMsg;
     wheel currentMsg;
 
@@ -114,7 +114,8 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
      void messageDecoder(string msg){
         if (timer <= 100){
         previousMsg = currentMsg; // currentmsg schuift op en word de previousmsg
-        } else {
+        } 
+        if (reset == true){
         previousMsg = null;
         }
 
@@ -156,7 +157,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
             }
            // previousTicks = ticks;
             //Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight + "leftDir =" + leftDir + "RightDir =" + rightDir);
-        
+        movement();
         
         }
     }
@@ -167,34 +168,10 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         //double moveForward = 0;
 
         timer += Time.deltaTime;
+        reset = false;
         if (timer >= 100){
             timer = 0;
-        }
-        if(previousMsg == null && currentMsg != null){
-            rotateAround(currentMsg.isLeftWheel, currentMsg.value);     // there havent been 2 messages  -> always rotationaround (0,1), (0,-1), (1,0) or (-1,0)
-        }
-        if(previousMsg != null){                                        // there've been 2 messages 
-            if(previousMsg.isLeftWheel != currentMsg.isLeftWheel){          //there's a message from the left and right
-                if(previousMsg.value == currentMsg.value){                      //they match -> move forward in direction of value
-                    move(previousMsg.value, currentMsg.value);
-                    slowDown();
-                };
-                if(previousMsg.value != currentMsg.value){                      //they don't match -> rotation around self in direction of positive wheel 
-                    rotate(previousMsg.isLeftWheel, previousMsg.value, currentMsg.isLeftWheel, currentMsg.value);
-                    slowDown();
-                }
-            }
-            if(previousMsg.isLeftWheel == currentMsg.isLeftWheel){          //there's 2 left messages or 2 right
-                if(previousMsg.value == currentMsg.value){                      //they match -> rotate twice around left or right in direction of value
-                    rotateAround(currentMsg.isLeftWheel, currentMsg.value*2);
-                    slowDown();
-                };
-                if(previousMsg.value != currentMsg.value){                      //they don't match -> first rotate around direction of previous value then current value
-                    rotateAround(currentMsg.isLeftWheel, previousMsg.value);
-                    rotateAround(currentMsg.isLeftWheel, currentMsg.value);
-                    slowDown();
-                }
-            }
+            reset = true;
         }
 
         //moveForward = (valueRight + valueLeft) * speed ;
@@ -226,16 +203,53 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         //Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight);   
     }
 
+    void movement(){
+        if(previousMsg == null && currentMsg != null){
+                    rotateAround(currentMsg.isLeftWheel, currentMsg.value);     // there havent been 2 messages  -> always rotationaround (0,1), (0,-1), (1,0) or (-1,0)
+                }
+        if(previousMsg != null){                                        // there've been 2 messages 
+            if(previousMsg.isLeftWheel != currentMsg.isLeftWheel){          //there's a message from the left and right
+                if(previousMsg.value == currentMsg.value){                      //they match -> move forward in direction of value
+                    move(previousMsg.value, currentMsg.value);
+                    //Debug.Log("previousMsg.value "+ previousMsg.value + "currentMsg.value "+  currentMsg.value);
+                    slowDown();
+                };
+                if(previousMsg.value != currentMsg.value){                      //they don't match -> rotation around self in direction of positive wheel 
+                    rotate(previousMsg.isLeftWheel, previousMsg.value, currentMsg.isLeftWheel, currentMsg.value);
+                    slowDown();
+                }
+            }
+            if(previousMsg.isLeftWheel == currentMsg.isLeftWheel){          //there's 2 left messages or 2 right
+                if(previousMsg.value == currentMsg.value){                      //they match -> rotate twice around left or right in direction of value
+                    rotateAround(currentMsg.isLeftWheel, currentMsg.value*2);
+                    slowDown();
+                };
+                if(previousMsg.value != currentMsg.value){                      //they don't match -> first rotate around direction of previous value then current value
+                    rotateAround(currentMsg.isLeftWheel, previousMsg.value);
+                    rotateAround(currentMsg.isLeftWheel, currentMsg.value);
+                    slowDown();
+                }
+            }
+        }
+    }
+
     void slowDown(){
+
+        Debug.Log("moveForward begin slowdown=" + moveForward);
         if (moveForward > 0){
+            // Debug.Log("moveForward is bigger than 0");
             moveForward -= Time.deltaTime;
+            // Debug.Log("moveForward " + moveForward);
             if( moveForward<0.01 || moveForward>-0.01){
+                // Debug.Log("moveForward is being set to 0");
                 moveForward = 0;
             }
          }
          if (moveForward < 0){
+            // Debug.Log("moveForward is smaller than 0");
             moveForward += Time.deltaTime;
             if( moveForward<0.01 || moveForward>-0.01){
+                //  Debug.Log("moveForward is being set to 0");
                 moveForward = 0;
             }
          } 
@@ -266,6 +280,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
                 rotateAroundByDegrees =0;
             }
          } 
+         Debug.Log("moveForward end slowdown =" + moveForward);
     }
     void rotateAround(bool left, double value){
         //rotate character around 
@@ -275,7 +290,8 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         //2nd variable = Vector3.(0,0,1).space(self)? 
         //3rd variable = degrees per second -> value * Time.deltaTime
      
-        rotateAroundByDegrees = (float)(value*100) * Time.deltaTime;
+        rotateAroundByDegrees = (float)(value*10000) * Time.deltaTime;
+        Debug.Log("rotateAroundByDegrees = " +rotateAroundByDegrees );
         if (left){
             transform.RotateAround(RightWheel.transform.position, Vector3.down, rotateAroundByDegrees);
         } else if (!left){
