@@ -11,10 +11,10 @@ using UnityEngine.EventSystems;
 public class moveCharOnSlide_UiToslow : MonoBehaviour
 {
     CharacterController characterController;
-    [SerializeField] private UnityEngine.UI.Slider leftSlider;
+/*     [SerializeField] private UnityEngine.UI.Slider leftSlider;
     [SerializeField] private TextMeshProUGUI leftSlidertext;
     [SerializeField] private UnityEngine.UI.Slider rightSlider;
-    [SerializeField] private TextMeshProUGUI rightSlidertext;
+    [SerializeField] private TextMeshProUGUI rightSlidertext; */
   //---------------------------------------------------------------//
     public GameObject ui_canvas;
     GameObject ui_element;
@@ -83,10 +83,10 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
             radius=1;
         }
         
-        leftSlider.minValue = -1;
+     /*    leftSlider.minValue = -1;
         leftSlider.maxValue = 1;
         rightSlider.minValue = -1;
-        rightSlider.maxValue = 1;
+        rightSlider.maxValue = 1; */
 
         characterController = GetComponent<CharacterController>();
         //listenToChanges();
@@ -291,9 +291,9 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         //3rd variable = degrees per second -> value * Time.deltaTime
      
         rotateAroundByDegrees = (float)(value*10000) * Time.deltaTime;
-        Debug.Log("rotateAroundByDegrees = " +rotateAroundByDegrees );
+        Debug.Log("rotateAroundByDegrees = " + rotateAroundByDegrees );
         if (left){
-            transform.RotateAround(RightWheel.transform.position, Vector3.down, rotateAroundByDegrees);
+            transform.RotateAround(RightWheel.transform.position, Vector3.down, (-rotateAroundByDegrees));
         } else if (!left){
             transform.RotateAround(LeftWheel.transform.position, Vector3.down, rotateAroundByDegrees);
         }
