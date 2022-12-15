@@ -54,6 +54,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     double moveForward;
     double rotatebydegrees;
     float rotateAroundByDegrees;
+    bool timerStarted;
     
     private void Awake(){
         //new input action system -> keyboard input 
@@ -112,11 +113,15 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     }
 
      void messageDecoder(string msg){
-        if (timer <= 100){
+       // if (timer <= 100){
         previousMsg = currentMsg; // currentmsg schuift op en word de previousmsg
-        } 
+        //} 
+        timer = 0;
+        timerStarted = true;
+        
         if (reset == true){
         previousMsg = null;
+        timerStarted = false;
         }
 
         if(msg != null ){
@@ -166,11 +171,11 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     {
         //double rotatebydegrees = 0;  
         //double moveForward = 0;
-
+        if (timerStarted == true){
         timer += Time.deltaTime;
+        } 
         reset = false;
-        if (timer >= 100){
-            timer = 0;
+        if (timer >= 10){
             reset = true;
         }
 
