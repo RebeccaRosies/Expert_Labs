@@ -54,7 +54,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     double moveForward;
     double rotatebydegrees;
     float rotateAroundByDegrees;
-    
+    bool timerStarted;
     private void Awake(){
         //new input action system -> keyboard input 
         wheelchairControls = new WheelchairControls();  
@@ -99,7 +99,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
      void OnMessageArrived(string msg)
     {
         messageDecoder(msg);
-        //Debug.Log("Message arrived in movementScript: " + msg);
+        Debug.Log("Message arrived in movementScript: " + msg);
 
     }
 
@@ -112,11 +112,16 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     }
 
      void messageDecoder(string msg){
-        if (timer <= 100){
+        
+        // if (timer <= 100){
         previousMsg = currentMsg; // currentmsg schuift op en word de previousmsg
-        } 
+          //} 
+        timer = 0;
+        timerStarted = true;
+      
         if (reset == true){
         previousMsg = null;
+        timerStarted = false;
         }
 
         if(msg != null ){
@@ -126,14 +131,14 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
                     ticks = float.Parse(ticksString);
                     valueRight = ticks/10;
                     rightDir = 1;
-                   //  Debug.Log(valueRight);
+                    Debug.Log(valueRight);
                 } 
                 if(msg[4] == 'C'){
                     ticksString = msg.Remove(0,6); //messages are in the form: OneCCW34 | TwoCLW336 -> the first 2 items are always 6 chars
                     ticks = float.Parse(ticksString);
                     valueRight =  ticks/10;
                     rightDir = 1;
-                    // Debug.Log(valueRight);
+                    Debug.Log(valueRight);
                 } 
 
                 currentMsg = new wheel(valueRight, false);
@@ -144,19 +149,19 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
                     ticks = float.Parse(ticksString);
                     valueLeft = ticks/10;
                     leftDir = 1;
-                   // Debug.Log(valueLeft);
+                    Debug.Log(valueLeft);
                 } 
                 if(msg[4] == 'C'){
                     ticksString = msg.Remove(0,6); //messages are in the form: OneCCW34 | TwoCLW336 -> the first 2 items are always 6 chars
                     ticks = float.Parse(ticksString);
                     valueLeft = ticks/10;
                     leftDir = 1;
-                    //Debug.Log(valueLeft);
+                    Debug.Log(valueLeft);
                 } 
                 currentMsg = new wheel(valueLeft, true);
             }
            // previousTicks = ticks;
-            //Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight + "leftDir =" + leftDir + "RightDir =" + rightDir);
+            Debug.Log("valueLeft =" + valueLeft + "valueRight =" + valueRight + "leftDir =" + leftDir + "RightDir =" + rightDir);
         movement();
         
         }
@@ -166,11 +171,11 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     {
         //double rotatebydegrees = 0;  
         //double moveForward = 0;
-
-        timer += Time.deltaTime;
+        if (timerStarted == true){
+            timer += Time.deltaTime;
+        }
         reset = false;
-        if (timer >= 100){
-            timer = 0;
+        if (timer >= 10){
             reset = true;
         }
 
@@ -211,7 +216,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
             if(previousMsg.isLeftWheel != currentMsg.isLeftWheel){          //there's a message from the left and right
                 if(previousMsg.value == currentMsg.value){                      //they match -> move forward in direction of value
                     move(previousMsg.value, currentMsg.value);
-                    //Debug.Log("previousMsg.value "+ previousMsg.value + "currentMsg.value "+  currentMsg.value);
+                    Debug.Log("previousMsg.value "+ previousMsg.value + "currentMsg.value "+  currentMsg.value);
                     slowDown();
                 };
                 if(previousMsg.value != currentMsg.value){                      //they don't match -> rotation around self in direction of positive wheel 
@@ -301,7 +306,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     }
     void rotate(bool left, double valuePrevious, bool right, double valueCurrent){
         //double rotatebydegrees = 0;
-        rotatebydegrees = ((valueRight - valueLeft) * speed)  *radius;
+        rotatebydegrees = ((valueRight - valueLeft) * (speed))  *radius;
         Vector3 rotationToAdd = new Vector3(0, (float)(rotatebydegrees), 0);
         transform.Rotate(rotationToAdd);
         
@@ -309,7 +314,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
 
     void move(double previousValue , double currentValue){
         //double moveForward = 0;
-        moveForward = (previousValue + currentValue) * speed ;
+        moveForward = (previousValue + currentValue) * (speed) ;
         Debug.Log("previousValue =" + previousValue + "currentValue =" + currentValue + "moveForward = " + moveForward);
         characterController.transform.Translate(new Vector3(0,0, (float)(moveForward)), Space.Self);
         
