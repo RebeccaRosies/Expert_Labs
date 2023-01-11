@@ -1320,9 +1320,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ui_canvas: {fileID: 1795319043}
-  speed: 0
-  radius: 0
-  inputMulti: 1
+  speed: 12.03
+  radius: 28.64
   RightWheel: {fileID: 1800221348}
   LeftWheel: {fileID: 2041522630}
 --- !u!143 &696739447
@@ -3602,7 +3601,6 @@ MonoBehaviour:
   ui_canvas: {fileID: 1795319043}
   speed: 10.44
   radius: 57.1
-  inputMulti: 0.01
   RightWheel: {fileID: 1995205270}
   LeftWheel: {fileID: 278185664}
 --- !u!143 &2034907007

@@ -39,7 +39,7 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
     double valueRight;
 
     double drag = 0.005;
-    public double inputMulti = 1;
+    //public double inputMulti = 0.01;
 
     //ARDUINO 2 MESSAGES
     bool reset;
@@ -127,16 +127,23 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         if(msg != null ){
             if(msg[0] == 'O'){
                 if(msg[4] == 'L'){
-                    ticksString = msg.Remove(0,6); //messages are in the form: OneCCW34 | TwoCLW336 -> the first 2 items are always 6 chars
+                    ticksString = msg.Remove(0,6); //messages are in the form: OneCCW-1| TwoCLW336 -> the first 2 items are always 6 chars
                     ticks = float.Parse(ticksString);
-                    valueRight = ticks/10;
+                    /* if (ticks > 0){
+                         valueRight = -0.01;
+                    } else if (ticks < 0){
+                         valueRight = 0.01;
+                    } */
+                    valueRight = -0.1;
+                    //valueRight = ticks/10;
                     rightDir = 1;
                     Debug.Log(valueRight);
                 } 
                 if(msg[4] == 'C'){
-                    ticksString = msg.Remove(0,6); //messages are in the form: OneCCW34 | TwoCLW336 -> the first 2 items are always 6 chars
+                    ticksString = msg.Remove(0,6); //messages are in the form: OneCCW1| TwoCLW336 -> the first 2 items are always 6 chars
                     ticks = float.Parse(ticksString);
-                    valueRight =  ticks/10;
+                    valueRight = 0.1;
+                    //valueRight =  ticks/10;
                     rightDir = 1;
                     Debug.Log(valueRight);
                 } 
@@ -147,14 +154,16 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
                 if(msg[4] == 'L'){
                     ticksString = msg.Remove(0,6); //messages are in the form: OneCCW34 | TwoCLW336 -> the first 2 items are always 6 chars
                     ticks = float.Parse(ticksString);
-                    valueLeft = ticks/10;
+                    valueLeft = 0.1;
+                    //valueLeft = ticks/10;
                     leftDir = 1;
                     Debug.Log(valueLeft);
                 } 
                 if(msg[4] == 'C'){
                     ticksString = msg.Remove(0,6); //messages are in the form: OneCCW34 | TwoCLW336 -> the first 2 items are always 6 chars
                     ticks = float.Parse(ticksString);
-                    valueLeft = ticks/10;
+                    valueLeft = -0.1;
+                    //valueLeft = ticks/10;
                     leftDir = 1;
                     Debug.Log(valueLeft);
                 } 
@@ -187,16 +196,16 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         //transform.Rotate(rotationToAdd);
         
 
-        if(valueRight > 0.05) {
+        if(valueRight > 1) {
             valueRight -= drag;
-        } else if(valueRight < -0.05) {
+        } else if(valueRight < -1) {
             valueRight+= drag;
         } else {
             valueRight *= 0;
         }
-        if(valueLeft > 0.05) {
+        if(valueLeft > 1) {
             valueLeft -=drag;
-        } else if(valueLeft < -0.05) {
+        } else if(valueLeft < -1) {
             valueLeft+= drag;
         } else {
             valueLeft *= 0;
@@ -296,11 +305,11 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         //3rd variable = degrees per second -> value * Time.deltaTime
      
         rotateAroundByDegrees = (float)(value*10000) * Time.deltaTime;
-        Debug.Log("rotateAroundByDegrees = " + rotateAroundByDegrees );
+        //Debug.Log("rotateAroundByDegrees = " + rotateAroundByDegrees );
         if (left){
-            transform.RotateAround(RightWheel.transform.position, Vector3.down, (-rotateAroundByDegrees/10));
+            transform.RotateAround(RightWheel.transform.position, Vector3.down, (-rotateAroundByDegrees/1));
         } else if (!left){
-            transform.RotateAround(LeftWheel.transform.position, Vector3.down, rotateAroundByDegrees/10);
+            transform.RotateAround(LeftWheel.transform.position, Vector3.down, rotateAroundByDegrees/1);
         }
         
     }
