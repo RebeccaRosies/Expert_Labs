@@ -298,9 +298,9 @@ public class moveCharOnSlide_UiToslow : MonoBehaviour
         rotateAroundByDegrees = (float)(value*10000) * Time.deltaTime;
         Debug.Log("rotateAroundByDegrees = " + rotateAroundByDegrees );
         if (left){
-            transform.RotateAround(RightWheel.transform.position, Vector3.down, (-rotateAroundByDegrees));
+            transform.RotateAround(RightWheel.transform.position, Vector3.down, (-rotateAroundByDegrees/10));
         } else if (!left){
-            transform.RotateAround(LeftWheel.transform.position, Vector3.down, rotateAroundByDegrees);
+            transform.RotateAround(LeftWheel.transform.position, Vector3.down, rotateAroundByDegrees/10);
         }
         
     }
